@@ -1,7 +1,7 @@
 # Among Us Mods commands line tool
 
 ## Intructions
-Download [latest release](https://github.com/goeno/aum/releases/latest) of `aum.exe` file and execute it to add command `aum` to your terminal.
+Download [latest release](https://github.com/goeno/aum-updater/releases/latest) of `aum-updater.exe` file and execute it to add `aum` & `aum-update` commands to your terminal.
 
 ### Availables commands :
 ```
