@@ -58,7 +58,11 @@ func main() {
 		fmt.Printf("%s %s", RedBold("[ERROR]"), Red("AmongUsMods require a terminal running as administrator. Please reopen your terminal with administrator permissions"))
 		return
 	}
-	if HelpCommand.Match() || !IsCommand() {
+	if !IsCommand() {
+		Help()
+		return
+	}
+	if HelpCommand.Match() {
 		HelpCommand.ParseInput()
 		err := HelpCommand.ParseArgs()
 		if err != nil {
