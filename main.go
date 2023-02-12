@@ -3,13 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
-	"golang.org/x/sys/windows"
 	"log"
 	"os"
 	"regexp"
 	"strings"
-	"syscall"
 )
 
 var AppdataFolderPath string
@@ -57,10 +54,6 @@ func initCommands() {
 }
 
 func main() {
-	if !isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()) {
-		InitializeAumCommand()
-		return
-	}
 	if !amAdmin() {
 		fmt.Printf("%s %s", RedBold("[ERROR]"), Red("AmongUsMods require a terminal running as administrator. Please reopen your terminal with administrator permissions"))
 		return
@@ -276,50 +269,6 @@ func DownloadMod(release *Release, owner string, repo string) {
 	log.Fatal(fmt.Sprintf("Mod %s/%s not found", owner, repo))
 }
 
-func InitializeAumCommand() {
-	if !amAdmin() {
-		runMeElevated()
-		return
-	}
-	executable, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	binDirectoryPath := fmt.Sprintf("%s%sbin", AppFolderPath, string(os.PathSeparator))
-	mkdirIfNoExists(binDirectoryPath)
-	pathEnv := os.Getenv("PATH")
-	if strings.Contains(pathEnv, binDirectoryPath) {
-		fmt.Println("oui")
-	} else {
-		pathEnv += fmt.Sprintf(";%s", binDirectoryPath)
-		err = os.Setenv("PATH", pathEnv)
-		if err != nil {
-			panic(err)
-		}
-	}
-	if !fileExists(fmt.Sprintf("%s%saum.exe", binDirectoryPath, string(os.PathSeparator))) {
-		_, err = copyFile(executable, fmt.Sprintf("%s%saum.exe", binDirectoryPath, string(os.PathSeparator)))
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		target, err := getFileMd5(fmt.Sprintf("%s%saum.exe", binDirectoryPath, string(os.PathSeparator)))
-		if err != nil {
-			panic(err)
-		}
-		current, err := getFileMd5(executable)
-		if err != nil {
-			panic(err)
-		}
-		if target != current {
-			_, err = copyFile(executable, fmt.Sprintf("%s%saum.exe", binDirectoryPath, string(os.PathSeparator)))
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-}
-
 func amAdmin() bool {
 	file, err := os.Open("\\\\.\\PHYSICALDRIVE0")
 	if err != nil {
@@ -327,23 +276,4 @@ func amAdmin() bool {
 	}
 	closeFile(file)
 	return true
-}
-
-func runMeElevated() {
-	verb := "runas"
-	exe, _ := os.Executable()
-	cwd, _ := os.Getwd()
-	args := strings.Join(os.Args[1:], " ")
-
-	verbPtr, _ := syscall.UTF16PtrFromString(verb)
-	exePtr, _ := syscall.UTF16PtrFromString(exe)
-	cwdPtr, _ := syscall.UTF16PtrFromString(cwd)
-	argPtr, _ := syscall.UTF16PtrFromString(args)
-
-	var showCmd int32 = 1 //SW_NORMAL
-
-	err := windows.ShellExecute(0, verbPtr, exePtr, argPtr, cwdPtr, showCmd)
-	if err != nil {
-		fmt.Println(err)
-	}
 }
